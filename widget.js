@@ -1,13 +1,39 @@
 (function () {
   if (window.GolfCourseChatbot) return;
 
+  function getCurrentScript() {
+    return document.currentScript || (function () {
+      const scripts = document.getElementsByTagName("script");
+      return scripts[scripts.length - 1];
+    })();
+  }
+
+  function getCourseIdFromScript() {
+    const script = getCurrentScript();
+    if (!script || !script.src) return null;
+
+    try {
+      const url = new URL(script.src);
+      return url.searchParams.get("course");
+    } catch (e) {
+      return null;
+    }
+  }
+
   window.GolfCourseChatbot = {
-    init: function (options) {
-      const apiBase = options.apiBase;
-      const courseId = options.courseId;
+    init: function (options = {}) {
+      const scriptCourseId = getCourseIdFromScript();
+
+      const apiBase =
+        options.apiBase ||
+        "https://golf-course-chatbot.onrender.com";
+
+      const courseId =
+        options.courseId ||
+        scriptCourseId;
 
       if (!apiBase || !courseId) {
-        console.error("GolfCourseChatbot requires apiBase and courseId");
+        console.error("GolfCourseChatbot requires a courseId.");
         return;
       }
 
@@ -268,4 +294,11 @@
       loadConfig();
     }
   };
+
+  const autoCourseId = getCourseIdFromScript();
+  if (autoCourseId) {
+    window.GolfCourseChatbot.init({
+      courseId: autoCourseId
+    });
+  }
 })();
